@@ -1,13 +1,11 @@
 {
   "dependencies": {
-<<<<<<< Updated upstream
     "com.unity.collab-proxy": "2.12.4",
     "com.unity.feature.development": "1.0.2",
     "com.unity.ide.rider": "3.0.39",
     "com.unity.inputsystem": "1.18.0",
     "com.unity.learn.iet-framework": "5.0.3",
     "com.unity.mobile.android-logcat": "1.4.7",
-    "com.unity.multiplayer.center": "1.0.0",
     "com.unity.nuget.newtonsoft-json": "3.2.2",
     "com.unity.render-pipelines.universal": "17.0.4",
     "com.unity.test-framework": "1.5.1",
@@ -20,9 +18,8 @@
     "com.unity.xr.management": "4.5.4",
     "com.unity.xr.meta-openxr": "2.5.0",
     "com.unity.xr.openxr": "1.16.1",
-=======
     "com.unity.multiplayer.center": "1.0.0",
->>>>>>> Stashed changes
+
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
