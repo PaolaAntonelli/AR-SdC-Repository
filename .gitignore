@@ -104,3 +104,20 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specifici
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+
+# Custom settings (opzionale se vuoi ignorare alcuni ProjectSettings personalizzati)
+# /ProjectSettings/EditorBuildSettings.asset  # Decommenta solo se serve

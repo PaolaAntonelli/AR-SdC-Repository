@@ -11,8 +11,11 @@ TagManager:
   - 
   - Water
   - UI
+<<<<<<< Updated upstream
   - Spawner Contact
   - Placeable Surface
+=======
+>>>>>>> Stashed changes
   - 
   - 
   - 
@@ -35,7 +38,13 @@ TagManager:
   - 
   - 
   - 
+<<<<<<< Updated upstream
   - XR Simulation
+=======
+  - 
+  - 
+  - 
+>>>>>>> Stashed changes
   - 
   m_SortingLayers:
   - name: Default
@@ -43,6 +52,7 @@ TagManager:
     locked: 0
   m_RenderingLayers:
   - Default
+<<<<<<< Updated upstream
   - Light Layer 1
   - Light Layer 2
   - Light Layer 3
@@ -50,3 +60,5 @@ TagManager:
   - Light Layer 5
   - Light Layer 6
   - Light Layer 7
+=======
+>>>>>>> Stashed changes
