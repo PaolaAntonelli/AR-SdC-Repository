@@ -218,15 +218,79 @@ public class BeamController : MonoBehaviour
         return p;
     }
  
-    void RenderDiagram(LineRenderer line, float[] values, float scale, Color color)
+ // genera mesh dei diagrammi e colora i bordi
+ void RenderDiagram(LineRenderer line, float[] values, float scale, Color color)
     {
-        if (line == null) return;
+        if (line == null || values == null || values.Length == 0) return;
+
         line.positionCount = values.Length;
+        Vector3[] borderPoints = new Vector3[values.Length];
+
+        // 1. Calcolo e disegno della linea di confine globale (LineRenderer)
         for (int i = 0; i < values.Length; i++)
         {
-            float x = BeamStartX + (i * (BeamLength / (values.Length - 1)));
-            line.SetPosition(i, new Vector3(x, beamObject.transform.position.y, beamObject.transform.position.z) + diagramOffset + new Vector3(0, values[i] * scale, 0));
+            float x = BeamStartX + ((float)i / (values.Length - 1)) * BeamLength;
+            Vector3 basePos = new Vector3(x, beamObject.transform.position.y, beamObject.transform.position.z) + diagramOffset;
+            Vector3 diagramPos = basePos + new Vector3(0, values[i] * scale, 0);
+
+            line.SetPosition(i, diagramPos);
+            borderPoints[i] = diagramPos; // Salva la coordinata globale
         }
+
+        // 2. Generazione del poligono di riempimento in coordinate locali
+        GenerateDiagramMesh(line.gameObject, borderPoints, values.Length);
+    }
+
+    void GenerateDiagramMesh(GameObject container, Vector3[] borderPoints, int resolution)
+    {
+        MeshFilter meshFilter = container.GetComponent<MeshFilter>();
+        if (meshFilter == null) meshFilter = container.AddComponent<MeshFilter>();
+
+        MeshRenderer meshRenderer = container.GetComponent<MeshRenderer>();
+        if (meshRenderer == null) meshRenderer = container.AddComponent<MeshRenderer>();
+
+        Mesh mesh = new Mesh();
+        
+        // 2 vertici (base e diagramma) per ogni punto di campionamento
+        Vector3[] vertices = new Vector3[resolution * 2];
+        
+        // Avendo impostato "Render Face: Both" nel materiale, bastano 6 indici (2 triangoli) per segmento
+        int[] triangles = new int[(resolution - 1) * 6];
+
+        int vertIndex = 0;
+        int triIndex = 0;
+
+        for (int i = 0; i < resolution; i++)
+        {
+            float x = BeamStartX + ((float)i / (resolution - 1)) * BeamLength;
+            Vector3 globalBasePoint = new Vector3(x, beamObject.transform.position.y, beamObject.transform.position.z) + diagramOffset;
+            Vector3 globalDiagramPoint = borderPoints[i];
+
+            // Mantiene la correzione della scala convertendo da World Space a Local Space del GameObject
+            vertices[vertIndex] = container.transform.InverseTransformPoint(globalBasePoint);          // Vertice inferiore (Trave)
+            vertices[vertIndex + 1] = container.transform.InverseTransformPoint(globalDiagramPoint); // Vertice superiore (Diagramma)
+
+            if (i < resolution - 1)
+            {
+                // Generazione di una sola faccia (l'Inspector penserà a renderizzarla double-sided)
+                triangles[triIndex++] = vertIndex;
+                triangles[triIndex++] = vertIndex + 1;
+                triangles[triIndex++] = vertIndex + 2;
+
+                triangles[triIndex++] = vertIndex + 1;
+                triangles[triIndex++] = vertIndex + 3;
+                triangles[triIndex++] = vertIndex + 2;
+            }
+
+            vertIndex += 2;
+        }
+
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+
+        meshFilter.mesh = mesh;
     }
 }
  
