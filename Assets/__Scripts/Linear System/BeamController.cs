@@ -251,10 +251,8 @@ public class BeamController : MonoBehaviour
 
         Mesh mesh = new Mesh();
         
-        // 2 vertici (base e diagramma) per ogni punto di campionamento
         Vector3[] vertices = new Vector3[resolution * 2];
-        
-        // Avendo impostato "Render Face: Both" nel materiale, bastano 6 indici (2 triangoli) per segmento
+        Vector2[] uvs = new Vector2[resolution * 2]; // <-- AGGIUNTO: Array per le coordinate UV
         int[] triangles = new int[(resolution - 1) * 6];
 
         int vertIndex = 0;
@@ -266,13 +264,16 @@ public class BeamController : MonoBehaviour
             Vector3 globalBasePoint = new Vector3(x, beamObject.transform.position.y, beamObject.transform.position.z) + diagramOffset;
             Vector3 globalDiagramPoint = borderPoints[i];
 
-            // Mantiene la correzione della scala convertendo da World Space a Local Space del GameObject
-            vertices[vertIndex] = container.transform.InverseTransformPoint(globalBasePoint);          // Vertice inferiore (Trave)
-            vertices[vertIndex + 1] = container.transform.InverseTransformPoint(globalDiagramPoint); // Vertice superiore (Diagramma)
+            vertices[vertIndex] = container.transform.InverseTransformPoint(globalBasePoint);          
+            vertices[vertIndex + 1] = container.transform.InverseTransformPoint(globalDiagramPoint); 
+
+            // Calcolo delle UV: l'asse X (U) va da 0 a 1, l'asse Y (V) va da 0 (base) a 1 (bordo del diagramma)
+            float normalizedX = (float)i / (resolution - 1);
+            uvs[vertIndex] = new Vector2(normalizedX, 0f);     // Coordinata UV per la base sulla trave
+            uvs[vertIndex + 1] = new Vector2(normalizedX, 1f); // Coordinata UV per il picco del diagramma
 
             if (i < resolution - 1)
             {
-                // Generazione di una sola faccia (l'Inspector penserà a renderizzarla double-sided)
                 triangles[triIndex++] = vertIndex;
                 triangles[triIndex++] = vertIndex + 1;
                 triangles[triIndex++] = vertIndex + 2;
@@ -286,6 +287,7 @@ public class BeamController : MonoBehaviour
         }
 
         mesh.vertices = vertices;
+        mesh.uv = uvs; // <-- AGGIUNTO: Assegnazione delle UV alla mesh
         mesh.triangles = triangles;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
