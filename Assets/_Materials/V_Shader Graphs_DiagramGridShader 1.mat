@@ -54,8 +54,9 @@ Material:
     - _LineDensity: 20
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _XRMotionVectorsPass: 1
     m_Colors:
-    - _DiagramColor: {r: 0, g: 1, b: 0, a: 0.27450982}
-    - _GridLineColor: {r: 0, g: 1, b: 0, a: 0.15686275}
+    - _DiagramColor: {r: 0, g: 0, b: 0.27, a: 0.27450982}
+    - _GridLineColor: {r: 0, g: 0, b: 0.79607844, a: 0.15686275}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
