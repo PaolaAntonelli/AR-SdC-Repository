@@ -4,20 +4,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
+using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets; // Namespace ufficiale ObjectSpawner
 using ZXing;
 using TMPro;
 
 public class QRMarkerTracker : MonoBehaviour
 {
-    [Header("Configurazione AR")]
+    [Header("Configurazione")]
+    [SerializeField] private ObjectSpawner mySpawner; 
     [SerializeField] private ARCameraManager cameraManager;
     [SerializeField] private ARRaycastManager raycastManager;
     [SerializeField] private ARAnchorManager anchorManager; 
     
-    [Header("Oggetto da far Spuntare")]
-    [Tooltip("Trascina qui il PREFAB del tuo oggetto, non lo spawner!")]
-    [SerializeField] private GameObject objectToSpawnPrefab;
-
     [Header("UI Debug")]
     [SerializeField] private TextMeshProUGUI statusText;
 
@@ -29,8 +27,17 @@ public class QRMarkerTracker : MonoBehaviour
     void Start()
     {
         qrReader = new BarcodeReaderGeneric { AutoRotate = true };
+        
+        // Iscrizione all'evento dello spawner
+        if (mySpawner != null) mySpawner.objectSpawned += OnObjectSpawned;
+        
         if (statusText) statusText.text = "Fase 1: Inquadra il QR Code...";
         StartCoroutine(ScanRoutine());
+    }
+
+    private void OnObjectSpawned(GameObject go)
+    {
+        spawnedObject = go; 
     }
 
     IEnumerator ScanRoutine()
@@ -75,7 +82,6 @@ public class QRMarkerTracker : MonoBehaviour
 
     void Update()
     {
-        // Intercetta il click/trigger
         if (qrLetto && (Input.GetButtonDown("Fire1") || Input.GetMouseButtonDown(0)))
         {
             EseguiSpawnOspostamento();
@@ -95,41 +101,28 @@ public class QRMarkerTracker : MonoBehaviour
 
             if (spawnedObject == null)
             {
-                // PRIMA VOLTA: Creiamo l'oggetto dal Prefab
-                spawnedObject = Instantiate(objectToSpawnPrefab, hitPose.position, Quaternion.identity);
-                AllineaAllaCamera(spawnedObject, hitPose.up, cam);
+                // Prima volta: lo creiamo
+                mySpawner.SpawnObject(hitPose.position, hitPose.up);
                 CreaAncora(hitPose);
-                
-                if (statusText) statusText.text = "Oggetto istanziato! Clicca altrove per spostarlo.";
             }
             else
             {
-                // VOLTE SUCCESSIVE: Spostiamo lo stesso oggetto senza duplicarlo
+                // Successive volte: spostiamo l'oggetto esistente
                 spawnedObject.transform.position = hitPose.position;
-                AllineaAllaCamera(spawnedObject, hitPose.up, cam);
+                spawnedObject.transform.rotation = Quaternion.LookRotation(hitPose.up);
                 
-                // Rimuoviamo la vecchia ancora e creiamo la nuova
+                // Aggiorniamo l'ancora
                 if (currentAnchor != null) anchorManager.TryRemoveAnchor(currentAnchor);
                 CreaAncora(hitPose);
                 
-                if (statusText) statusText.text = "Oggetto spostato!";
+                if (statusText) statusText.text = "Oggetto spostato sul tavolo!";
             }
         }
     }
 
-    // QUESTA È LA MAGIA PRESA DA OBJECTSPAWNER:
-    // Calcola l'orientamento per far apparire l'oggetto dritto verso i tuoi occhi,
-    // allineandolo perfettamente all'inclinazione del tavolo.
-    private void AllineaAllaCamera(GameObject obj, Vector3 spawnNormal, Camera cam)
-    {
-        Vector3 forward = cam.transform.position - obj.transform.position;
-        Vector3 projectedForward = Vector3.ProjectOnPlane(forward, spawnNormal);
-        obj.transform.rotation = Quaternion.LookRotation(projectedForward, spawnNormal);
-    }
-
     private async void CreaAncora(Pose pose)
     {
-        // Generiamo l'ancora solida asincrona per inchiodarlo al tavolo
+        // Metodo asincrono ufficiale per ancore stabili
         var result = await anchorManager.TryAddAnchorAsync(pose);
         if (result.status.IsSuccess())
         {
