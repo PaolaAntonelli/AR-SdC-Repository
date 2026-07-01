@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 919132149155446097}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.1, z: -0.15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -134,7 +134,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6499332718705410712}
   m_Layer: 0
-  m_Name: Env_trave
+  m_Name: Env_trave AR
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -150,7 +150,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 5047992064300981065}
@@ -691,9 +691,9 @@ MonoBehaviour:
   shearLine: {fileID: 8184495899235792499}
   momentLine: {fileID: 7737278718113639402}
   forceMagnitude: 0.5
-  currentDiagramScale: -1
+  currentDiagramScale: -0.5
   deflectionVisualScale: 100
-  diagramOffset: {x: 0, y: 0, z: -0.2}
+  diagramOffset: {x: 0, y: 0, z: 0.03}
   minDistanceBetweenObjects: 0
   loadYOffset: 0.1
   supportYOffset: -0.1
