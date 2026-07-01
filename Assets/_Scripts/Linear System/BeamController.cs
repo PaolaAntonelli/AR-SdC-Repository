@@ -190,14 +190,23 @@ public class BeamController : MonoBehaviour
         return center;
     }
  
-  private GameObject SpawnAtPosition(GameObject prefab, float localX, float yOff)
+private GameObject SpawnAtPosition(GameObject prefab, float localX, float yOff)
 {
-    // Creiamo l'oggetto direttamente come figlio della trave
-    GameObject inst = Instantiate(prefab, beamObject.transform);
+    // 1. Istanziamo l'oggetto nel mondo globale (senza assegnare subito il padre per non distorcere lo scale)
+    GameObject inst = Instantiate(prefab);
     
-    // Assegniamo la sua posizione LOCALE relativa al pivot centrale della trave
-    inst.transform.localPosition = new Vector3(localX, yOff, 0f);
-    inst.transform.localRotation = Quaternion.identity;
+    // 2. Calcoliamo la posizione globale esatta unendo la X locale e la Y locale (offset) allo spazio della trave
+    Vector3 localTargetPos = new Vector3(localX, yOff, 0f);
+    Vector3 globalTargetPos = beamObject.transform.TransformPoint(localTargetPos);
+    
+    // 3. Assegniamo la posizione e la rotazione globale iniziale
+    inst.transform.position = globalTargetPos;
+    inst.transform.rotation = beamObject.transform.rotation;
+    
+    // 4. Ora lo rendiamo figlio della trave. 
+    // Passando 'true', Unity calcola i valori locali corretti preservando 
+    // la scala globale del prefab ed evitando che venga schiacciato o deformato dal padre!
+    inst.transform.SetParent(beamObject.transform, true);
 
     if (inst.TryGetComponent(out DraggableLoad drag)) drag.beamController = this;
     return inst;

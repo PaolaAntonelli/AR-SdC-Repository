@@ -11607,11 +11607,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8a5797738ff587545af288a96b7860be, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.7071067
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8a5797738ff587545af288a96b7860be, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.7071068
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8a5797738ff587545af288a96b7860be, type: 3}
       propertyPath: m_LocalRotation.y
@@ -11619,7 +11619,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8a5797738ff587545af288a96b7860be, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8a5797738ff587545af288a96b7860be, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -16773,11 +16773,15 @@ PrefabInstance:
       objectReference: {fileID: 1666470706}
     - target: {fileID: 2966125952347699567, guid: 552a2d7cb29b95d48ad6cd85c2052b20, type: 3}
       propertyPath: loadYOffset
-      value: 0.1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2966125952347699567, guid: 552a2d7cb29b95d48ad6cd85c2052b20, type: 3}
       propertyPath: supportYOffset
-      value: -0.1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2966125952347699567, guid: 552a2d7cb29b95d48ad6cd85c2052b20, type: 3}
+      propertyPath: diagramOffset.z
+      value: -0.2
       objectReference: {fileID: 0}
     - target: {fileID: 2966125952347699567, guid: 552a2d7cb29b95d48ad6cd85c2052b20, type: 3}
       propertyPath: minDistanceBetweenObjects

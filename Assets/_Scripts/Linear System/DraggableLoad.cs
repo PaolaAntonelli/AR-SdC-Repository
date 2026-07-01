@@ -53,32 +53,32 @@ public class DraggableLoad : MonoBehaviour
 
     void Drag()
     {
-        if (beamController == null || beamController.beamObject == null) return;
-        Transform beamTransform = beamController.beamObject.transform;
+    if (beamController == null || beamController.beamObject == null) return;
+    Transform beamTransform = beamController.beamObject.transform;
 
-        Vector3 mPos = Mouse.current.position.ReadValue();
-        // Calcoliamo il piano di trascinamento proiettando il raggio sul piano locale della trave
-        Ray ray = mainCamera.ScreenPointToRay(mPos);
-        Plane beamPlane = new Plane(beamTransform.forward, beamTransform.position);
+    Vector3 mPos = Mouse.current.position.ReadValue();
+    // Calcoliamo il piano di trascinamento proiettando il raggio sul piano locale della trave
+    Ray ray = mainCamera.ScreenPointToRay(mPos);
+    Plane beamPlane = new Plane(beamTransform.forward, beamTransform.position);
 
-        if (beamPlane.Raycast(ray, out float enterDistance))
-        {
-            Vector3 worldPoint = ray.GetPoint(enterDistance);
-            Vector3 localPoint = beamTransform.InverseTransformPoint(worldPoint);
+    if (beamPlane.Raycast(ray, out float enterDistance))
+    {
+        Vector3 worldPoint = ray.GetPoint(enterDistance);
+        Vector3 localPoint = beamTransform.InverseTransformPoint(worldPoint);
 
-            // Clamping nello spazio locale della trave
-            float minX = beamController.BeamStartX;
-            float maxX = beamController.BeamStartX + beamController.BeamLength;
-            float cX = Mathf.Clamp(localPoint.x, minX, maxX);
+        // Clamping nello spazio locale della trave
+        float minX = beamController.BeamStartX;
+        float maxX = beamController.BeamStartX + beamController.BeamLength;
+        float cX = Mathf.Clamp(localPoint.x, minX, maxX);
 
-            // Manteniamo intatte le coordinate Y e Z locali originarie dell'oggetto
-            Vector3 localReset = beamTransform.InverseTransformPoint(transform.position);
-            Vector3 targetLocalPos = new Vector3(cX, localReset.y, localReset.z);
+        // Manteniamo intatte le coordinate Y e Z locali originarie dell'oggetto
+        Vector3 localReset = beamTransform.InverseTransformPoint(transform.position);
+        Vector3 targetLocalPos = new Vector3(cX, localReset.y, localReset.z);
 
-            // Applichiamo la nuova posizione globale
-            transform.position = beamTransform.TransformPoint(targetLocalPos);
-        }
+        // Applichiamo la nuova posizione globale
+        transform.position = beamTransform.TransformPoint(targetLocalPos);
     }
+}
 
 }
 
