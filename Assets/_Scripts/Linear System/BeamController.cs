@@ -157,15 +157,18 @@ public class BeamController : MonoBehaviour
         Invoke("SetupInitialScenario", 0.05f);
     }
  
-    void SetupInitialScenario()
-    {
-        UpdateBeamDimensions();
-        // Sostituito -0.6f con supportYOffset
-        SpawnAtPosition(supportPrefab, BeamStartX, supportYOffset);
-        SpawnAtPosition(supportPrefab, BeamStartX + BeamLength, supportYOffset);
-        // Sostituito 0.6f con loadYOffset
-        SpawnAtPosition(loadPrefab, BeamStartX + (BeamLength / 2f), loadYOffset);
-    }
+ void SetupInitialScenario()
+{
+    UpdateBeamDimensions(); // Aggiorna BeamStartX e BeamLength
+    
+    // Se il pivot è al centro, BeamStartX sarà negativo (es. -2) 
+    // e BeamStartX + BeamLength sarà positivo (es. +2)
+    SpawnAtPosition(supportPrefab, BeamStartX, supportYOffset);
+    SpawnAtPosition(supportPrefab, BeamStartX + BeamLength, supportYOffset);
+    
+    // Il centro matematico sarà perfettamente coerente
+    SpawnAtPosition(loadPrefab, BeamStartX + (BeamLength / 2f), loadYOffset);
+}
  
     // Sostituito -0.6f e 0.6f con le nuove variabili
     public void AddSupport() => SpawnAtPosition(supportPrefab, GetValidSpawnX(), supportYOffset);
@@ -187,20 +190,33 @@ public class BeamController : MonoBehaviour
         return center;
     }
  
-    private GameObject SpawnAtPosition(GameObject prefab, float worldX, float yOff)
-    {
-        Vector3 pos = new Vector3(worldX, beamObject.transform.position.y + yOff, beamObject.transform.position.z);
-        GameObject inst = Instantiate(prefab, pos, Quaternion.identity);
-        if (inst.TryGetComponent(out DraggableLoad drag)) drag.beamController = this;
-        return inst;
-    }
+  private GameObject SpawnAtPosition(GameObject prefab, float localX, float yOff)
+{
+    // Creiamo l'oggetto direttamente come figlio della trave
+    GameObject inst = Instantiate(prefab, beamObject.transform);
+    
+    // Assegniamo la sua posizione LOCALE relativa al pivot centrale della trave
+    inst.transform.localPosition = new Vector3(localX, yOff, 0f);
+    inst.transform.localRotation = Quaternion.identity;
+
+    if (inst.TryGetComponent(out DraggableLoad drag)) drag.beamController = this;
+    return inst;
+}
  
     void UpdateBeamDimensions()
     {
-        Renderer r = beamObject.GetComponent<Renderer>();
-        if (r == null) return;
-        BeamLength = r.bounds.size.x;
-        BeamStartX = r.bounds.min.x;
+    Renderer r = beamObject.GetComponent<Renderer>();
+    if (r == null) return;
+    
+    // Usiamo lo scale locale o la dimensione della mesh locale anziché i bounds globali
+    MeshFilter mf = beamObject.GetComponent<MeshFilter>();
+    if (mf != null)
+        {
+        // La lunghezza locale della mesh moltiplicata per la scala X dell'oggetto
+        BeamLength = mf.sharedMesh.bounds.size.x * beamObject.transform.localScale.x;
+        // L'inizio locale (di solito -metà lunghezza se la mesh è centrata)
+        BeamStartX = mf.sharedMesh.bounds.min.x * beamObject.transform.localScale.x;
+        }
     }
  
     GameObject[] GetAllElements()
@@ -210,89 +226,98 @@ public class BeamController : MonoBehaviour
         return l.ToArray();
     }
  
+    // Modifica anche GetRelativePositions per calcolare la X locale rispetto alla trave
     List<float> GetRelativePositions(string tag)
     {
         var p = new List<float>();
         foreach (var o in GameObject.FindGameObjectsWithTag(tag))
-            p.Add(Mathf.Clamp(o.transform.position.x - BeamStartX, 0, BeamLength));
+        {
+            // Trasformiamo la posizione globale dell'oggetto in coordinate locali rispetto alla trave
+            Vector3 localPos = beamObject.transform.InverseTransformPoint(o.transform.position);
+            p.Add(Mathf.Clamp(localPos.x - BeamStartX, 0, BeamLength));
+        }
         return p;
     }
  
  // genera mesh dei diagrammi e colora i bordi
  void RenderDiagram(LineRenderer line, float[] values, float scale, Color color)
-    {
-        if (line == null || values == null || values.Length == 0) return;
+ {
+     if (line == null || values == null || values.Length == 0) return;
 
-        line.positionCount = values.Length;
-        Vector3[] borderPoints = new Vector3[values.Length];
+     line.positionCount = values.Length;
+     Vector3[] localBorderPoints = new Vector3[values.Length];
 
-        // 1. Calcolo e disegno della linea di confine globale (LineRenderer)
-        for (int i = 0; i < values.Length; i++)
-        {
-            float x = BeamStartX + ((float)i / (values.Length - 1)) * BeamLength;
-            Vector3 basePos = new Vector3(x, beamObject.transform.position.y, beamObject.transform.position.z) + diagramOffset;
-            Vector3 diagramPos = basePos + new Vector3(0, values[i] * scale, 0);
+     for (int i = 0; i < values.Length; i++)
+     {
+         // Calcolo della X locale sulla trave (va da BeamStartX a BeamStartX + BeamLength)
+         float localX = BeamStartX + ((float)i / (values.Length - 1)) * BeamLength;
+         
+         // Posizione base locale sulla trave + l'offset del diagramma
+         Vector3 localBasePos = new Vector3(localX, 0, 0) + diagramOffset;
+         Vector3 localDiagramPos = localBasePos + new Vector3(0, values[i] * scale, 0);
 
-            line.SetPosition(i, diagramPos);
-            borderPoints[i] = diagramPos; // Salva la coordinata globale
-        }
+         // Convertiamo in posizione globale SOLO per il LineRenderer (che ragiona in world space)
+         line.SetPosition(i, beamObject.transform.TransformPoint(localDiagramPos));
+         
+         // Salviamo la coordinata LOCALE per la generazione della mesh interna
+         localBorderPoints[i] = localDiagramPos;
+     }
 
-        // 2. Generazione del poligono di riempimento in coordinate locali
-        GenerateDiagramMesh(line.gameObject, borderPoints, values.Length);
-    }
+     GenerateDiagramMesh(line.gameObject, localBorderPoints, values.Length);
+ }
 
-    void GenerateDiagramMesh(GameObject container, Vector3[] borderPoints, int resolution)
-    {
-        MeshFilter meshFilter = container.GetComponent<MeshFilter>();
-        if (meshFilter == null) meshFilter = container.AddComponent<MeshFilter>();
+ void GenerateDiagramMesh(GameObject container, Vector3[] localBorderPoints, int resolution)
+ {
+     MeshFilter meshFilter = container.GetComponent<MeshFilter>();
+     if (meshFilter == null) meshFilter = container.AddComponent<MeshFilter>();
 
-        MeshRenderer meshRenderer = container.GetComponent<MeshRenderer>();
-        if (meshRenderer == null) meshRenderer = container.AddComponent<MeshRenderer>();
+     MeshRenderer meshRenderer = container.GetComponent<MeshRenderer>();
+     if (meshRenderer == null) meshRenderer = container.AddComponent<MeshRenderer>();
 
-        Mesh mesh = new Mesh();
-        
-        Vector3[] vertices = new Vector3[resolution * 2];
-        Vector2[] uvs = new Vector2[resolution * 2]; // <-- AGGIUNTO: Array per le coordinate UV
-        int[] triangles = new int[(resolution - 1) * 6];
+     Mesh mesh = new Mesh();
+     
+     Vector3[] vertices = new Vector3[resolution * 2];
+     Vector2[] uvs = new Vector2[resolution * 2];
+     int[] triangles = new int[(resolution - 1) * 6];
 
-        int vertIndex = 0;
-        int triIndex = 0;
+     int vertIndex = 0;
+     int triIndex = 0;
 
-        for (int i = 0; i < resolution; i++)
-        {
-            float x = BeamStartX + ((float)i / (resolution - 1)) * BeamLength;
-            Vector3 globalBasePoint = new Vector3(x, beamObject.transform.position.y, beamObject.transform.position.z) + diagramOffset;
-            Vector3 globalDiagramPoint = borderPoints[i];
+     for (int i = 0; i < resolution; i++)
+     {
+         float localX = BeamStartX + ((float)i / (resolution - 1)) * BeamLength;
+         Vector3 localBasePoint = new Vector3(localX, 0, 0) + diagramOffset;
+         Vector3 localDiagramPoint = localBorderPoints[i];
 
-            vertices[vertIndex] = container.transform.InverseTransformPoint(globalBasePoint);          
-            vertices[vertIndex + 1] = container.transform.InverseTransformPoint(globalDiagramPoint); 
+         // Trasformiamo i punti nello spazio locale del CONTAINER del diagramma
+         vertices[vertIndex] = container.transform.InverseTransformPoint(beamObject.transform.TransformPoint(localBasePoint));          
+         vertices[vertIndex + 1] = container.transform.InverseTransformPoint(beamObject.transform.TransformPoint(localDiagramPoint)); 
 
-            // Calcolo delle UV: l'asse X (U) va da 0 a 1, l'asse Y (V) va da 0 (base) a 1 (bordo del diagramma)
-            float normalizedX = (float)i / (resolution - 1);
-            uvs[vertIndex] = new Vector2(normalizedX, 0f);     // Coordinata UV per la base sulla trave
-            uvs[vertIndex + 1] = new Vector2(normalizedX, 1f); // Coordinata UV per il picco del diagramma
+         float normalizedX = (float)i / (resolution - 1);
+         uvs[vertIndex] = new Vector2(normalizedX, 0f);
+         uvs[vertIndex + 1] = new Vector2(normalizedX, 1f);
 
-            if (i < resolution - 1)
-            {
-                triangles[triIndex++] = vertIndex;
-                triangles[triIndex++] = vertIndex + 1;
-                triangles[triIndex++] = vertIndex + 2;
+         if (i < resolution - 1)
+         {
+             triangles[triIndex++] = vertIndex;
+             triangles[triIndex++] = vertIndex + 1;
+             triangles[triIndex++] = vertIndex + 2;
 
-                triangles[triIndex++] = vertIndex + 1;
-                triangles[triIndex++] = vertIndex + 3;
-                triangles[triIndex++] = vertIndex + 2;
-            }
+             triangles[triIndex++] = vertIndex + 1;
+             triangles[triIndex++] = vertIndex + 3;
+             triangles[triIndex++] = vertIndex + 2;
+         }
 
-            vertIndex += 2;
-        }
+         vertIndex += 2;
+     }
 
-        mesh.vertices = vertices;
-        mesh.uv = uvs; // <-- AGGIUNTO: Assegnazione delle UV alla mesh
-        mesh.triangles = triangles;
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
+     mesh.vertices = vertices;
+     mesh.uv = uvs;
+     mesh.triangles = triangles;
+     mesh.RecalculateNormals();
+     mesh.RecalculateBounds();
 
-        meshFilter.mesh = mesh;
-    }
+     meshFilter.mesh = mesh;
+ }
 }
  

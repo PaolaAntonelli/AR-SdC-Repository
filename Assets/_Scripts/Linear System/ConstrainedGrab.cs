@@ -5,107 +5,57 @@ using UnityEngine.XR.Interaction.Toolkit;
  
 
 // Ereditiamo da XRGrabInteractable per mantenerne tutte le funzionalit�
-
 public class ConstrainedGrab : UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable
-
 {
+    private BeamController beamController;
+    private Transform beamTransform;
+    private float localY;
+    private float localZ;
 
-    private BeamController beamController;
+    protected override void Awake()
+    {
+        base.Awake();
+        beamController = Object.FindFirstObjectByType<BeamController>();
+        if (beamController != null && beamController.beamObject != null)
+        {
+            beamTransform = beamController.beamObject.transform;
+            // Salviamo le posizioni locali relative alla trave
+            Vector3 localStartPos = beamTransform.InverseTransformPoint(transform.position);
+            localY = localStartPos.y;
+            localZ = localStartPos.z;
+        }
+    }
 
-    private float initialY;
+    public override void ProcessInteractable(XRInteractionUpdateOrder.UpdatePhase phase)
+    {
+        base.ProcessInteractable(phase);
 
-    private float initialZ;
+        if (phase == XRInteractionUpdateOrder.UpdatePhase.Fixed || phase == XRInteractionUpdateOrder.UpdatePhase.Dynamic)
+        {
+            if (beamController == null || beamTransform == null) return;
 
- 
+            // 1. Convertiamo la posizione corrente (mossa dalla mano) in coordinate locali della trave
+            Vector3 localPos = beamTransform.InverseTransformPoint(transform.position);
 
-    protected override void Awake()
+            // 2. Applichiamo il Clamp sui limiti locali
+            float minX = beamController.BeamStartX;
+            float maxX = beamController.BeamStartX + beamController.BeamLength;
+            localPos.x = Mathf.Clamp(localPos.x, minX, maxX);
+            
+            // Forziamo Y e Z locali per non far uscire l'oggetto dalla trave
+            localPos.y = localY;
+            localPos.z = localZ;
 
-    {
+            // 3. Riconvertiamo in posizione globale e applichiamo
+            transform.position = beamTransform.TransformPoint(localPos);
 
-        base.Awake();
-
-        beamController = Object.FindFirstObjectByType<BeamController>();
-
-       
-
-        // Salviamo l'assegnazione iniziale per evitare micro-spostamenti verticali
-
-        initialY = transform.position.y;
-
-        initialZ = transform.position.z;
-
-    }
-
- 
-
-    // Questo � il cuore di XRI: viene chiamato pi� volte per frame
-
-    public override void ProcessInteractable(XRInteractionUpdateOrder.UpdatePhase phase)
-
-    {
-
-        // 1. Lasciamo che Unity calcoli il movimento verso la mano virtuale
-
-        base.ProcessInteractable(phase);
-
- 
-
-        // 2. Subito dopo (nella fase della fisica o del rendering), correggiamo la posizione
-
-        if (phase == XRInteractionUpdateOrder.UpdatePhase.Fixed || phase == XRInteractionUpdateOrder.UpdatePhase.Dynamic)
-
-        {
-
-            if (beamController == null) return;
-
- 
-
-            Vector3 pos = transform.position;
-
-            float minX = beamController.BeamStartX;
-
-            float maxX = beamController.BeamStartX + beamController.BeamLength;
-
- 
-
-            // Se stiamo per uscire, blocchiamo la X
-
-            if (pos.x < minX || pos.x > maxX)
-
-            {
-
-                pos.x = Mathf.Clamp(pos.x, minX, maxX);
-
-               
-
-                // Manteniamo rigorosamente Y e Z fissi
-
-                pos.y = initialY;
-
-                pos.z = initialZ;
-
-                transform.position = pos;
-
- 
-
-                // Azzeriamo la velocit� fisica per eliminare ogni tremolio residuo
-
-                Rigidbody rb = GetComponent<Rigidbody>();
-
-                if (rb != null)
-
-                {
-
-                    rb.linearVelocity = Vector3.zero;
-
-                    rb.angularVelocity = Vector3.zero;
-
-                }
-
-            }
-
-        }
-
-    }
-
+            // Azzeriamo le velocità fisiche
+            Rigidbody rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+        }
+    }
 }

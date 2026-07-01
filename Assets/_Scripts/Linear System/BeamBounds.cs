@@ -15,26 +15,35 @@ public class BeamBounds : MonoBehaviour
     }
 
     void FixedUpdate()
+{
+    if (beamController == null || beamController.beamObject == null) return;
+
+    // 1. Otteniamo il Transform della trave a cui fare riferimento
+    Transform beamTransform = beamController.beamObject.transform;
+
+    // 2. Convertiamo la posizione globale del Rigidbody in coordinate LOCALI rispetto alla trave
+    Vector3 localPos = beamTransform.InverseTransformPoint(rb.position);
+    
+    // 3. Calcoliamo i limiti locali della trave
+    float minX = beamController.BeamStartX;
+    float maxX = beamController.BeamStartX + beamController.BeamLength;
+
+    // 4. Se l'oggetto cerca di uscire dai bordi locali, lo blocchiamo
+    if (localPos.x < minX || localPos.x > maxX)
     {
-        if (beamController == null) return;
-
-        Vector3 pos = rb.position;
+        // Applichiamo il clamp solo sulla X locale
+        localPos.x = Mathf.Clamp(localPos.x, minX, maxX);
         
-        // Calcoliamo i limiti della trave
-        float minX = beamController.BeamStartX;
-        float maxX = beamController.BeamStartX + beamController.BeamLength;
-
-        // Se l'oggetto cerca di uscire dai bordi, lo blocchiamo
-        if (pos.x < minX || pos.x > maxX)
-        {
-            pos.x = Mathf.Clamp(pos.x, minX, maxX);
-            
-            // Usiamo rb.position invece di transform.position 
-            // per non creare conflitti (jitter) con l'XR Grab
-            rb.position = pos; 
-            
-            // Azzeriamo la velocità su X per fermare l'inerzia contro il "muro" invisibile
-            rb.linearVelocity = Vector3.zero; 
-        }
+        // 5. Riconvertiamo la posizione locale corretta in una posizione GLOBALE
+        Vector3 worldPosCorrected = beamTransform.TransformPoint(localPos);
+        
+        // Assegniamo la posizione globale corretta al Rigidbody per evitare jittering
+        rb.position = worldPosCorrected; 
+        
+        // 6. Azzeriamo le velocità relative alla trave per fermare l'inerzia
+        // Per farlo in modo preciso in MR, azzeriamo la velocità globale del corpo rigido
+        rb.linearVelocity = Vector3.zero; 
+        rb.angularVelocity = Vector3.zero;
     }
+}
 }
