@@ -10,17 +10,31 @@ using TMPro;
 
 public class QRMarkerTracker : MonoBehaviour
 {
+    // Definiamo gli stati possibili della nostra applicazione
+    public enum TrackerState
+    {
+        Scanning,       // Fase 1: Ricerca QR
+        ReadyToSpawn,   // Fase 2: QR Trovato, attesa tocco
+        ObjectSpawned   // Fase 3: Oggetto istanziato, modalità spostamento
+    }
+
     [Header("Configurazione")]
     [SerializeField] private ObjectSpawner mySpawner; 
     [SerializeField] private ARCameraManager cameraManager;
     [SerializeField] private ARRaycastManager raycastManager;
     
-    [Header("UI Debug")]
-    [SerializeField] private TextMeshProUGUI statusText;
+    [Header("UI Menu (Pannelli)")]
+    [SerializeField] private GameObject panelScanning;      // Pannello: "Inquadra il QR..."
+    [SerializeField] private GameObject panelReadyToSpawn;  // Pannello: "QR Letto! Tocca..."
+    [SerializeField] private GameObject panelObjectSpawned; // Pannello: "Oggetto Istanziato..."
+    
+    [Header("UI Info (Opzionale)")]
+    [SerializeField] private TextMeshProUGUI infoText; // Se vuoi mostrare piccoli feedback temporanei (es. "Spostato!")
 
     private bool qrLetto = false;
     private GameObject spawnedObject = null; 
     private BarcodeReaderGeneric qrReader;
+    private TrackerState currentState;
 
     void Start()
     {
@@ -28,17 +42,16 @@ public class QRMarkerTracker : MonoBehaviour
         
         if (mySpawner != null)
         {
-            // Ci iscriviamo all'evento per intercettare OGNI volta che lo spawner crea qualcosa
             mySpawner.objectSpawned += OnObjectSpawned; 
         }
         
-        if (statusText) statusText.text = "Fase 1: Inquadra il QR Code...";
+        // Partiamo dallo stato di Scansione
+        AggiornaStatoUI(TrackerState.Scanning);
         StartCoroutine(ScanRoutine());
     }
 
     private void OnDestroy()
     {
-        // Buona pratica: disiscriversi dagli eventi quando l'oggetto viene distrutto
         if (mySpawner != null)
         {
             mySpawner.objectSpawned -= OnObjectSpawned;
@@ -79,45 +92,40 @@ public class QRMarkerTracker : MonoBehaviour
             if (result != null)
             {
                 qrLetto = true;
-                if (statusText) statusText.text = "QR Letto! Tocca il tavolo per spawnare l'oggetto.";
+                // Cambio stato: QR Letto
+                AggiornaStatoUI(TrackerState.ReadyToSpawn);
             }
         }
     }
 
-    // 1. IL GESTORE DEGLI SPAWN (Il trucco per "spegnere" lo spawner)
     private void OnObjectSpawned(GameObject go)
     {
-        // Se il QR non è ancora stato letto, distruggiamo preventivamente qualsiasi spawn involontario
         if (!qrLetto)
         {
             Destroy(go);
             return;
         }
 
-        // Se l'oggetto non esiste ancora, lo salviamo (Primo Spawn autorizzato)
         if (spawnedObject == null)
         {
             spawnedObject = go;
-            if (statusText) statusText.text = "Oggetto Istanziato! Tocca un altro punto per spostarlo.";
+            // Cambio stato: Oggetto Spawnato
+            AggiornaStatoUI(TrackerState.ObjectSpawned);
         }
         else
         {
-            // Se l'oggetto esiste già, significa che l'utente ha toccato di nuovo lo schermo.
-            // Poiché l'ObjectSpawner è testardo e ignora l'enabled, distruggiamo il clone istantaneamente.
             Destroy(go);
         }
     }
 
     void Update()
     {
-        // 2. SPOSTAMENTO: Solo se l'oggetto è stato spawnato catturiamo l'input per muoverlo
         if (spawnedObject != null && TryGetTouchPosition(out Vector2 touchPosition))
         {
             SpostaOggettoEsistente(touchPosition);
         }
     }
 
-    // Supporto per tocco su schermo (Mobile) o Click (Editor)
     private bool TryGetTouchPosition(out Vector2 touchPosition)
     {
         if (Input.touchCount > 0)
@@ -143,15 +151,43 @@ public class QRMarkerTracker : MonoBehaviour
     {
         List<ARRaycastHit> hits = new List<ARRaycastHit>();
 
-        // Usiamo la posizione del tocco a schermo per lanciare il raycast sui piani AR
         if (raycastManager.Raycast(touchPosition, hits, TrackableType.PlaneWithinPolygon))
         {
             Pose hitPose = hits[0].pose;
-            
-            // Spostiamo l'oggetto nel nuovo punto rilevato
             spawnedObject.transform.position = hitPose.position;
             
-            if (statusText) statusText.text = "Oggetto spostato con successo!";
+            // Per i feedback rapidi (es. "Spostato!"), un testo dinamico dentro al pannello attivo è comodo
+            if (infoText) infoText.text = "Oggetto spostato!";
+        }
+    }
+
+    /// <summary>
+    /// Gestore centrale della UI. Attiva il pannello corretto e spegne gli altri.
+    /// </summary>
+    private void AggiornaStatoUI(TrackerState nuovoStato)
+    {
+        currentState = nuovoStato;
+
+        // Reset iniziale di tutti i pannelli (evita che si sovrappongano)
+        if (panelScanning) panelScanning.SetActive(false);
+        if (panelReadyToSpawn) panelReadyToSpawn.SetActive(false);
+        if (panelObjectSpawned) panelObjectSpawned.SetActive(false);
+
+        // Attiva solo il pannello legato allo stato attuale
+        switch (nuovoStato)
+        {
+            case TrackerState.Scanning:
+                if (panelScanning) panelScanning.SetActive(true);
+                break;
+
+            case TrackerState.ReadyToSpawn:
+                if (panelReadyToSpawn) panelReadyToSpawn.SetActive(true);
+                break;
+
+            case TrackerState.ObjectSpawned:
+                if (panelObjectSpawned) panelObjectSpawned.SetActive(true);
+                if (infoText) infoText.text = "Tocca un altro punto per spostarlo.";
+                break;
         }
     }
 }

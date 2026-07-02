@@ -6,8 +6,14 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SdC.unity
-    guid: 4bc36939ade0a944582364033ac53e12
+    path: Assets/_ScenaDEMO/1_Scena iniziale.unity
+    guid: e70fe8d78cda39b4cafb9a21a8cf9735
+  - enabled: 1
+    path: Assets/_ScenaDEMO/SdC MR.unity
+    guid: 72ee27922dc2a0a4688ea42229cdd939
+  - enabled: 1
+    path: Assets/_ScenaDEMO/SdC VR.unity
+    guid: d81aa5c29fafd9f4aaef837835805caa
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: f8a442de0c8906f4d9c00184993fc289, type: 2}
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 782b14e43b4629340bf7d31eff0c02f2, type: 2}
