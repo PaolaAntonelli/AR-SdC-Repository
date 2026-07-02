@@ -161,7 +161,7 @@ MonoBehaviour:
   m_ShowOrientation: 0
   m_ShowClassifications: 1
   m_ShowTrackingState: 1
-  m_TrackingMeshColor: {r: 0.36862743, g: 0.65882355, b: 1, a: 0.25490198}
+  m_TrackingMeshColor: {r: 0.36862743, g: 0.65882355, b: 1, a: 0.050980393}
   m_TrackingOutlineGradient:
     serializedVersion: 2
     key0: {r: 0.34509805, g: 0.7647059, b: 1, a: 1}
