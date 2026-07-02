@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
-using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets; // Namespace ufficiale di ObjectSpawner
+using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 using ZXing;
 using TMPro;
 
@@ -19,18 +19,16 @@ public class QRMarkerTracker : MonoBehaviour
     [SerializeField] private TextMeshProUGUI statusText;
 
     private bool qrLetto = false;
-    private GameObject spawnedObject; 
+    private GameObject spawnedObject = null; 
     private BarcodeReaderGeneric qrReader;
 
     void Start()
     {
         qrReader = new BarcodeReaderGeneric { AutoRotate = true };
         
-        // 1. STRATEGIA INIZIALE: Disabilitiamo lo spawner all'avvio
         if (mySpawner != null)
         {
-            mySpawner.enabled = false;
-            // Ascoltiamo l'evento ufficiale dello spawner per sapere quando finisce il suo lavoro[cite: 2]
+            // Ci iscriviamo all'evento per intercettare OGNI volta che lo spawner crea qualcosa
             mySpawner.objectSpawned += OnObjectSpawned; 
         }
         
@@ -38,18 +36,13 @@ public class QRMarkerTracker : MonoBehaviour
         StartCoroutine(ScanRoutine());
     }
 
-    private void OnObjectSpawned(GameObject go)
+    private void OnDestroy()
     {
-        // Salviamo l'oggetto unico appena creato
-        spawnedObject = go; 
-        
-        // 3. CHIUSURA: L'oggetto è stato creato, spegniamo forzatamente lo spawner!
+        // Buona pratica: disiscriversi dagli eventi quando l'oggetto viene distrutto
         if (mySpawner != null)
         {
-            mySpawner.enabled = false;
+            mySpawner.objectSpawned -= OnObjectSpawned;
         }
-
-        if (statusText) statusText.text = "Oggetto Istanziato! I click futuri lo sposteranno soltanto.";
     }
 
     IEnumerator ScanRoutine()
@@ -86,43 +79,79 @@ public class QRMarkerTracker : MonoBehaviour
             if (result != null)
             {
                 qrLetto = true;
-                
-                // 2. ACCENSIONE: Il QR è stato letto, riattiviamo lo spawner per fargli accettare il tocco
-                if (mySpawner != null)
-                {
-                    mySpawner.enabled = true;
-                }
-
-                if (statusText) statusText.text = "QR Letto! Guarda il tavolo e clicca/tocca per spawnare l'oggetto.";
+                if (statusText) statusText.text = "QR Letto! Tocca il tavolo per spawnare l'oggetto.";
             }
+        }
+    }
+
+    // 1. IL GESTORE DEGLI SPAWN (Il trucco per "spegnere" lo spawner)
+    private void OnObjectSpawned(GameObject go)
+    {
+        // Se il QR non è ancora stato letto, distruggiamo preventivamente qualsiasi spawn involontario
+        if (!qrLetto)
+        {
+            Destroy(go);
+            return;
+        }
+
+        // Se l'oggetto non esiste ancora, lo salviamo (Primo Spawn autorizzato)
+        if (spawnedObject == null)
+        {
+            spawnedObject = go;
+            if (statusText) statusText.text = "Oggetto Istanziato! Tocca un altro punto per spostarlo.";
+        }
+        else
+        {
+            // Se l'oggetto esiste già, significa che l'utente ha toccato di nuovo lo schermo.
+            // Poiché l'ObjectSpawner è testardo e ignora l'enabled, distruggiamo il clone istantaneamente.
+            Destroy(go);
         }
     }
 
     void Update()
     {
-        // 4. SPOSTAMENTO: Se l'oggetto esiste già, lo spawner è disattivato.
-        // I click nativi vengono ignorati dallo spawner, quindi li catturiamo noi per SPOSTARE l'oggetto.
-        if (spawnedObject != null && (Input.GetButtonDown("Fire1") || Input.GetMouseButtonDown(0)))
+        // 2. SPOSTAMENTO: Solo se l'oggetto è stato spawnato catturiamo l'input per muoverlo
+        if (spawnedObject != null && TryGetTouchPosition(out Vector2 touchPosition))
         {
-            SpostaOggettoEsistente();
+            SpostaOggettoEsistente(touchPosition);
         }
     }
 
-    private void SpostaOggettoEsistente()
+    // Supporto per tocco su schermo (Mobile) o Click (Editor)
+    private bool TryGetTouchPosition(out Vector2 touchPosition)
     {
-        Camera cam = Camera.main;
-        Ray ray = new Ray(cam.transform.position, cam.transform.forward);
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+            if (touch.phase == TouchPhase.Began)
+            {
+                touchPosition = touch.position;
+                return true;
+            }
+        }
+        else if (Input.GetMouseButtonDown(0))
+        {
+            touchPosition = Input.mousePosition;
+            return true;
+        }
+
+        touchPosition = default;
+        return false;
+    }
+
+    private void SpostaOggettoEsistente(Vector2 touchPosition)
+    {
         List<ARRaycastHit> hits = new List<ARRaycastHit>();
 
-        // Cerchiamo le superfici mappate dal visore
-        if (raycastManager.Raycast(ray, hits, TrackableType.AllTypes))
+        // Usiamo la posizione del tocco a schermo per lanciare il raycast sui piani AR
+        if (raycastManager.Raycast(touchPosition, hits, TrackableType.PlaneWithinPolygon))
         {
             Pose hitPose = hits[0].pose;
             
-            // Spostiamo e ruotiamo l'oggetto sul nuovo punto che stiamo guardando
+            // Spostiamo l'oggetto nel nuovo punto rilevato
             spawnedObject.transform.position = hitPose.position;
             
-            if (statusText) statusText.text = "Oggetto spostato!";
+            if (statusText) statusText.text = "Oggetto spostato con successo!";
         }
     }
 }
