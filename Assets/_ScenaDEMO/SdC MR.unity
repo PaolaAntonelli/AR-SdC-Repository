@@ -15569,6 +15569,34 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
+      propertyPath: loadYOffset
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
+      propertyPath: forceMagnitude
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
+      propertyPath: supportYOffset
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
+      propertyPath: shearDiagramScale
+      value: -0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
+      propertyPath: momentDiagramScale
+      value: -0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
+      propertyPath: deflectionVisualScale
+      value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
+      propertyPath: minDistanceBetweenObjects
+      value: 1.23
+      objectReference: {fileID: 0}
     - target: {fileID: 6499332718705410712, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.13

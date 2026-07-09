@@ -15,7 +15,13 @@ public class BeamController : MonoBehaviour
  
     [Header("Parametri Grafici")]
     public float forceMagnitude = 15f;
-    public float currentDiagramScale = 0.05f;
+    
+    [Tooltip("Scala per il diagramma del Taglio (Shear)")]
+    public float shearDiagramScale = 0.05f;   // <--- NUOVO: Scala distinta per il Taglio
+    
+    [Tooltip("Scala per il diagramma del Momento (Moment)")]
+    public float momentDiagramScale = 0.05f;  // <--- NUOVO: Scala distinta per il Momento
+    
     // Se la deformazione va verso l'alto, cambia questo valore in negativo (es. -100)
     public float deflectionVisualScale = 100f;
     public Vector3 diagramOffset = new Vector3(0, -2f, 0);
@@ -41,6 +47,7 @@ public class BeamController : MonoBehaviour
     {
         currentSolver = isAnalytic ? SolverType.Analytic : SolverType.FEM;
     }
+    
     void Start()
     {
         if (beamObject != null)
@@ -102,8 +109,9 @@ public class BeamController : MonoBehaviour
                 results = BeamMath.CalculateFEM(BeamLength, lPos, lMag, sPos, 100);
             }
  
-            RenderDiagram(shearLine, results.shearPoints, currentDiagramScale, Color.cyan);
-            RenderDiagram(momentLine, results.momentPoints, currentDiagramScale, Color.magenta);
+            // <--- MODIFICATO: Ora passano i due fattori di scala indipendenti
+            RenderDiagram(shearLine, results.shearPoints, shearDiagramScale, Color.cyan);
+            RenderDiagram(momentLine, results.momentPoints, momentDiagramScale, Color.magenta);
  
             if (showDeflection) ApplyDeflectionToMesh(results.deflectionPoints);
             else ResetMesh();
@@ -114,7 +122,7 @@ public class BeamController : MonoBehaviour
     {
         Vector3[] displacedVertices = new Vector3[originalVertices.Length];
  
-        // localDown identifica la direzione "gių" nel sistema di coordinate della mesh
+        // localDown identifica la direzione "giù" nel sistema di coordinate della mesh
         Vector3 localDown = beamObject.transform.InverseTransformDirection(Vector3.down);
  
         for (int i = 0; i < originalVertices.Length; i++)
@@ -124,7 +132,7 @@ public class BeamController : MonoBehaviour
             int idx = Mathf.Clamp(Mathf.RoundToInt(relL * (deflections.Length - 1)), 0, deflections.Length - 1);
  
             // CORREZIONE VERSO: Moltiplichiamo per deflectionVisualScale.
-            // Se deflections[idx] č negativo (abbassamento), dAmount deve spingere verso localDown.
+            // Se deflections[idx] è negativo (abbassamento), dAmount deve spingere verso localDown.
             float dAmount = deflections[idx] * deflectionVisualScale;
  
             // Sommiamo lo spostamento alla posizione originale del vertice
@@ -149,7 +157,10 @@ public class BeamController : MonoBehaviour
     // --- LOGICA SPAWN E UI ---
  
     public void ToggleDeflection() => showDeflection = !showDeflection;
-    public void SetDiagramScale(float s) => currentDiagramScale = s;
+    
+    // <--- MODIFICATO: Metodi UI sdoppiati in caso tu debba collegarli a degli Slider dinamici
+    public void SetShearDiagramScale(float s) => shearDiagramScale = s;
+    public void SetMomentDiagramScale(float s) => momentDiagramScale = s;
  
     public void ResetStructure()
     {
@@ -157,18 +168,18 @@ public class BeamController : MonoBehaviour
         Invoke("SetupInitialScenario", 0.05f);
     }
  
- void SetupInitialScenario()
-{
-    UpdateBeamDimensions(); // Aggiorna BeamStartX e BeamLength
-    
-    // Se il pivot è al centro, BeamStartX sarà negativo (es. -2) 
-    // e BeamStartX + BeamLength sarà positivo (es. +2)
-    SpawnAtPosition(supportPrefab, BeamStartX, supportYOffset);
-    SpawnAtPosition(supportPrefab, BeamStartX + BeamLength, supportYOffset);
-    
-    // Il centro matematico sarà perfettamente coerente
-    SpawnAtPosition(loadPrefab, BeamStartX + (BeamLength / 2f), loadYOffset);
-}
+    void SetupInitialScenario()
+    {
+        UpdateBeamDimensions(); // Aggiorna BeamStartX e BeamLength
+        
+        // Se il pivot è al centro, BeamStartX sarà negativo (es. -2) 
+        // e BeamStartX + BeamLength sarà positivo (es. +2)
+        SpawnAtPosition(supportPrefab, BeamStartX, supportYOffset);
+        SpawnAtPosition(supportPrefab, BeamStartX + BeamLength, supportYOffset);
+        
+        // Il centro matematico sarà perfettamente coerente
+        SpawnAtPosition(loadPrefab, BeamStartX + (BeamLength / 2f), loadYOffset);
+    }
  
     // Sostituito -0.6f e 0.6f con le nuove variabili
     public void AddSupport() => SpawnAtPosition(supportPrefab, GetValidSpawnX(), supportYOffset);
@@ -190,32 +201,32 @@ public class BeamController : MonoBehaviour
         return center;
     }
  
-  private GameObject SpawnAtPosition(GameObject prefab, float localX, float yOff)
-{
-    // Creiamo l'oggetto direttamente come figlio della trave
-    GameObject inst = Instantiate(prefab, beamObject.transform);
-    
-    // Assegniamo la sua posizione LOCALE relativa al pivot centrale della trave
-    inst.transform.localPosition = new Vector3(localX, yOff, 0f);
-    inst.transform.localRotation = Quaternion.identity;
+    private GameObject SpawnAtPosition(GameObject prefab, float localX, float yOff)
+    {
+        // Creiamo l'oggetto direttamente come figlio della trave
+        GameObject inst = Instantiate(prefab, beamObject.transform);
+        
+        // Assegniamo la sua posizione LOCALE relativa al pivot centrale della trave
+        inst.transform.localPosition = new Vector3(localX, yOff, 0f);
+        inst.transform.localRotation = Quaternion.identity;
 
-    if (inst.TryGetComponent(out DraggableLoad drag)) drag.beamController = this;
-    return inst;
-}
+        if (inst.TryGetComponent(out DraggableLoad drag)) drag.beamController = this;
+        return inst;
+    }
  
     void UpdateBeamDimensions()
     {
-    Renderer r = beamObject.GetComponent<Renderer>();
-    if (r == null) return;
-    
-    // Usiamo lo scale locale o la dimensione della mesh locale anziché i bounds globali
-    MeshFilter mf = beamObject.GetComponent<MeshFilter>();
-    if (mf != null)
+        Renderer r = beamObject.GetComponent<Renderer>();
+        if (r == null) return;
+        
+        // Usiamo lo scale locale o la dimensione della mesh locale anziché i bounds globali
+        MeshFilter mf = beamObject.GetComponent<MeshFilter>();
+        if (mf != null)
         {
-        // La lunghezza locale della mesh moltiplicata per la scala X dell'oggetto
-        BeamLength = mf.sharedMesh.bounds.size.x * beamObject.transform.localScale.x;
-        // L'inizio locale (di solito -metà lunghezza se la mesh è centrata)
-        BeamStartX = mf.sharedMesh.bounds.min.x * beamObject.transform.localScale.x;
+            // La lunghezza locale della mesh moltiplicata per la scala X dell'oggetto
+            BeamLength = mf.sharedMesh.bounds.size.x * beamObject.transform.localScale.x;
+            // L'inizio locale (di solito -metà lunghezza se la mesh è centrata)
+            BeamStartX = mf.sharedMesh.bounds.min.x * beamObject.transform.localScale.x;
         }
     }
  
@@ -239,85 +250,84 @@ public class BeamController : MonoBehaviour
         return p;
     }
  
- // genera mesh dei diagrammi e colora i bordi
- void RenderDiagram(LineRenderer line, float[] values, float scale, Color color)
- {
-     if (line == null || values == null || values.Length == 0) return;
+    // genera mesh dei diagrammi e colora i bordi
+    void RenderDiagram(LineRenderer line, float[] values, float scale, Color color)
+    {
+        if (line == null || values == null || values.Length == 0) return;
 
-     line.positionCount = values.Length;
-     Vector3[] localBorderPoints = new Vector3[values.Length];
+        line.positionCount = values.Length;
+        Vector3[] localBorderPoints = new Vector3[values.Length];
 
-     for (int i = 0; i < values.Length; i++)
-     {
-         // Calcolo della X locale sulla trave (va da BeamStartX a BeamStartX + BeamLength)
-         float localX = BeamStartX + ((float)i / (values.Length - 1)) * BeamLength;
-         
-         // Posizione base locale sulla trave + l'offset del diagramma
-         Vector3 localBasePos = new Vector3(localX, 0, 0) + diagramOffset;
-         Vector3 localDiagramPos = localBasePos + new Vector3(0, values[i] * scale, 0);
+        for (int i = 0; i < values.Length; i++)
+        {
+            // Calcolo della X locale sulla trave (va da BeamStartX a BeamStartX + BeamLength)
+            float localX = BeamStartX + ((float)i / (values.Length - 1)) * BeamLength;
+            
+            // Posizione base locale sulla trave + l'offset del diagramma
+            Vector3 localBasePos = new Vector3(localX, 0, 0) + diagramOffset;
+            Vector3 localDiagramPos = localBasePos + new Vector3(0, values[i] * scale, 0);
 
-         // Convertiamo in posizione globale SOLO per il LineRenderer (che ragiona in world space)
-         line.SetPosition(i, beamObject.transform.TransformPoint(localDiagramPos));
-         
-         // Salviamo la coordinata LOCALE per la generazione della mesh interna
-         localBorderPoints[i] = localDiagramPos;
-     }
+            // Convertiamo in posizione globale SOLO per il LineRenderer (che ragiona in world space)
+            line.SetPosition(i, beamObject.transform.TransformPoint(localDiagramPos));
+            
+            // Salviamo la coordinata LOCALE per la generation della mesh interna
+            localBorderPoints[i] = localDiagramPos;
+        }
 
-     GenerateDiagramMesh(line.gameObject, localBorderPoints, values.Length);
- }
+        GenerateDiagramMesh(line.gameObject, localBorderPoints, values.Length);
+    }
 
- void GenerateDiagramMesh(GameObject container, Vector3[] localBorderPoints, int resolution)
- {
-     MeshFilter meshFilter = container.GetComponent<MeshFilter>();
-     if (meshFilter == null) meshFilter = container.AddComponent<MeshFilter>();
+    void GenerateDiagramMesh(GameObject container, Vector3[] localBorderPoints, int resolution)
+    {
+        MeshFilter meshFilter = container.GetComponent<MeshFilter>();
+        if (meshFilter == null) meshFilter = container.AddComponent<MeshFilter>();
 
-     MeshRenderer meshRenderer = container.GetComponent<MeshRenderer>();
-     if (meshRenderer == null) meshRenderer = container.AddComponent<MeshRenderer>();
+        MeshRenderer meshRenderer = container.GetComponent<MeshRenderer>();
+        if (meshRenderer == null) meshRenderer = container.AddComponent<MeshRenderer>();
 
-     Mesh mesh = new Mesh();
-     
-     Vector3[] vertices = new Vector3[resolution * 2];
-     Vector2[] uvs = new Vector2[resolution * 2];
-     int[] triangles = new int[(resolution - 1) * 6];
+        Mesh mesh = new Mesh();
+        
+        Vector3[] vertices = new Vector3[resolution * 2];
+        Vector2[] uvs = new Vector2[resolution * 2];
+        int[] triangles = new int[(resolution - 1) * 6];
 
-     int vertIndex = 0;
-     int triIndex = 0;
+        int vertIndex = 0;
+        int triIndex = 0;
 
-     for (int i = 0; i < resolution; i++)
-     {
-         float localX = BeamStartX + ((float)i / (resolution - 1)) * BeamLength;
-         Vector3 localBasePoint = new Vector3(localX, 0, 0) + diagramOffset;
-         Vector3 localDiagramPoint = localBorderPoints[i];
+        for (int i = 0; i < resolution; i++)
+        {
+            float localX = BeamStartX + ((float)i / (resolution - 1)) * BeamLength;
+            Vector3 localBasePoint = new Vector3(localX, 0, 0) + diagramOffset;
+            Vector3 localDiagramPoint = localBorderPoints[i];
 
-         // Trasformiamo i punti nello spazio locale del CONTAINER del diagramma
-         vertices[vertIndex] = container.transform.InverseTransformPoint(beamObject.transform.TransformPoint(localBasePoint));          
-         vertices[vertIndex + 1] = container.transform.InverseTransformPoint(beamObject.transform.TransformPoint(localDiagramPoint)); 
+            // Trasformiamo i punti nello spazio locale del CONTAINER del diagramma
+            vertices[vertIndex] = container.transform.InverseTransformPoint(beamObject.transform.TransformPoint(localBasePoint));          
+            vertices[vertIndex + 1] = container.transform.InverseTransformPoint(beamObject.transform.TransformPoint(localDiagramPoint)); 
 
-         float normalizedX = (float)i / (resolution - 1);
-         uvs[vertIndex] = new Vector2(normalizedX, 0f);
-         uvs[vertIndex + 1] = new Vector2(normalizedX, 1f);
+            float normalizedX = (float)i / (resolution - 1);
+            uvs[vertIndex] = new Vector2(normalizedX, 0f);
+            uvs[vertIndex + 1] = new Vector2(normalizedX, 1f);
 
-         if (i < resolution - 1)
-         {
-             triangles[triIndex++] = vertIndex;
-             triangles[triIndex++] = vertIndex + 1;
-             triangles[triIndex++] = vertIndex + 2;
+            if (i < resolution - 1)
+            {
+                triangles[triIndex++] = vertIndex;
+                triangles[triIndex++] = vertIndex + 1;
+                triangles[triIndex++] = vertIndex + 2;
 
-             triangles[triIndex++] = vertIndex + 1;
-             triangles[triIndex++] = vertIndex + 3;
-             triangles[triIndex++] = vertIndex + 2;
-         }
+                triangles[triIndex++] = vertIndex + 1;
+                triangles[triIndex++] = vertIndex + 3;
+                triangles[triIndex++] = vertIndex + 2;
+            }
 
-         vertIndex += 2;
-     }
+            vertIndex += 2;
+        }
 
-     mesh.vertices = vertices;
-     mesh.uv = uvs;
-     mesh.triangles = triangles;
-     mesh.RecalculateNormals();
-     mesh.RecalculateBounds();
+        mesh.vertices = vertices;
+        mesh.uv = uvs;
+        mesh.triangles = triangles;
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
 
-     meshFilter.mesh = mesh;
- }
+        meshFilter.mesh = mesh;
+    }
 }
- 
