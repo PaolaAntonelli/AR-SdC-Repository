@@ -10,12 +10,11 @@ using TMPro;
 
 public class QRMarkerTracker : MonoBehaviour
 {
-    // Definiamo gli stati possibili della nostra applicazione
     public enum TrackerState
     {
-        Scanning,       // Fase 1: Ricerca QR
-        ReadyToSpawn,   // Fase 2: QR Trovato, attesa tocco
-        ObjectSpawned   // Fase 3: Oggetto istanziato, modalità spostamento
+        Scanning,
+        ReadyToSpawn,
+        ObjectSpawned
     }
 
     [Header("Configurazione")]
@@ -23,13 +22,17 @@ public class QRMarkerTracker : MonoBehaviour
     [SerializeField] private ARCameraManager cameraManager;
     [SerializeField] private ARRaycastManager raycastManager;
     
+    [Header("Configurazione Input Visore")]
+    [Tooltip("Trascina qui il Transform del tuo controller (es. RightHand Controller o Ray Interactor) per sapere da dove sparare il raggio di spostamento.")]
+    [SerializeField] private Transform controllerPointer;
+
     [Header("UI Menu (Pannelli)")]
-    [SerializeField] private GameObject panelScanning;      // Pannello: "Inquadra il QR..."
-    [SerializeField] private GameObject panelReadyToSpawn;  // Pannello: "QR Letto! Tocca..."
-    [SerializeField] private GameObject panelObjectSpawned; // Pannello: "Oggetto Istanziato..."
+    [SerializeField] private GameObject panelScanning;      
+    [SerializeField] private GameObject panelReadyToSpawn;  
+    [SerializeField] private GameObject panelObjectSpawned; 
     
     [Header("UI Info (Opzionale)")]
-    [SerializeField] private TextMeshProUGUI infoText; // Se vuoi mostrare piccoli feedback temporanei (es. "Spostato!")
+    [SerializeField] private TextMeshProUGUI infoText; 
 
     private bool qrLetto = false;
     private GameObject spawnedObject = null; 
@@ -45,7 +48,6 @@ public class QRMarkerTracker : MonoBehaviour
             mySpawner.objectSpawned += OnObjectSpawned; 
         }
         
-        // Partiamo dallo stato di Scansione
         AggiornaStatoUI(TrackerState.Scanning);
         StartCoroutine(ScanRoutine());
     }
@@ -92,7 +94,6 @@ public class QRMarkerTracker : MonoBehaviour
             if (result != null)
             {
                 qrLetto = true;
-                // Cambio stato: QR Letto
                 AggiornaStatoUI(TrackerState.ReadyToSpawn);
             }
         }
@@ -109,7 +110,6 @@ public class QRMarkerTracker : MonoBehaviour
         if (spawnedObject == null)
         {
             spawnedObject = go;
-            // Cambio stato: Oggetto Spawnato
             AggiornaStatoUI(TrackerState.ObjectSpawned);
         }
         else
@@ -120,60 +120,71 @@ public class QRMarkerTracker : MonoBehaviour
 
     void Update()
     {
-        if (spawnedObject != null && TryGetTouchPosition(out Vector2 touchPosition))
+        // Adesso passiamo ad Update un vero e proprio Ray fisico nello spazio 3D
+        if (spawnedObject != null && TryGetInteractionRay(out Ray interactionRay))
         {
-            SpostaOggettoEsistente(touchPosition);
+            SpostaOggettoEsistente(interactionRay);
         }
     }
 
-    private bool TryGetTouchPosition(out Vector2 touchPosition)
+    // NUOVO METODO DI INPUT PER VISORE / EDITOR
+    private bool TryGetInteractionRay(out Ray ray)
     {
-        if (Input.touchCount > 0)
+        // Se siamo nell'Editor di Unity, permettiamo il test classico col click del mouse
+        if (Application.isEditor)
         {
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began)
+            if (Input.GetMouseButtonDown(0))
             {
-                touchPosition = touch.position;
+                ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 return true;
             }
         }
-        else if (Input.GetMouseButtonDown(0))
+        else // Se siamo dentro al Meta Quest
         {
-            touchPosition = Input.mousePosition;
-            return true;
+            // Il trigger del controller viene comunque interpretato come GetMouseButtonDown o Touch
+            if (Input.GetMouseButtonDown(0) || (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began))
+            {
+                // Se hai assegnato il controller nell'Inspector, spara il raggio dalla punta del controller
+                if (controllerPointer != null)
+                {
+                    ray = new Ray(controllerPointer.position, controllerPointer.forward);
+                }
+                else
+                {
+                    // Fallback: spara il raggio partendo dal centro del tuo visore (sguardo/gaze)
+                    ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
+                }
+                return true;
+            }
         }
 
-        touchPosition = default;
+        ray = default;
         return false;
     }
 
-    private void SpostaOggettoEsistente(Vector2 touchPosition)
+    // MODIFICATO: Accetta il Ray invece del Vector2
+    private void SpostaOggettoEsistente(Ray interactionRay)
     {
         List<ARRaycastHit> hits = new List<ARRaycastHit>();
 
-        if (raycastManager.Raycast(touchPosition, hits, TrackableType.PlaneWithinPolygon))
+        // Sfruttiamo l'overload nativo di ARRaycastManager che accetta un Ray fisicamente orientato nello spazio
+        if (raycastManager.Raycast(interactionRay, hits, TrackableType.PlaneWithinPolygon))
         {
             Pose hitPose = hits[0].pose;
             spawnedObject.transform.position = hitPose.position;
             
-            // Per i feedback rapidi (es. "Spostato!"), un testo dinamico dentro al pannello attivo è comodo
             if (infoText) infoText.text = "Oggetto spostato!";
         }
     }
 
-    /// <summary>
-    /// Gestore centrale della UI. Attiva il pannello corretto e spegne gli altri.
-    /// </summary>
     private void AggiornaStatoUI(TrackerState nuovoStato)
     {
         currentState = nuovoStato;
 
-        // Reset iniziale di tutti i pannelli (evita che si sovrappongano)
         if (panelScanning) panelScanning.SetActive(false);
         if (panelReadyToSpawn) panelReadyToSpawn.SetActive(false);
         if (panelObjectSpawned) panelObjectSpawned.SetActive(false);
 
-        // Attiva solo il pannello legato allo stato attuale
         switch (nuovoStato)
         {
             case TrackerState.Scanning:

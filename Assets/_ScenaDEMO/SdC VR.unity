@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: 2cf2b48eb291d6c45a6e01e4e5c144ce, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: ec46d2188d4b8774e847e75f1e12a8db, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -9916,7 +9916,7 @@ GameObject:
   - component: {fileID: 510717840}
   - component: {fileID: 510717839}
   m_Layer: 0
-  m_Name: Casi studio
+  m_Name: Applicazioni reali
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10174,7 +10174,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: CASO STUDIO
+  m_text: Applicazioni reali
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 64253cd99bf76d949b37fc221708c78e, type: 2}
   m_sharedMaterial: {fileID: -7487747522247377602, guid: 64253cd99bf76d949b37fc221708c78e, type: 2}
@@ -10492,7 +10492,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: CASO STUDIO
+  m_text: Applicazioni reali
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 64253cd99bf76d949b37fc221708c78e, type: 2}
   m_sharedMaterial: {fileID: -7487747522247377602, guid: 64253cd99bf76d949b37fc221708c78e, type: 2}
@@ -16429,7 +16429,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Casi studio
+  m_text: 'Applicazioni
+
+    reali'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6d34d264dcbda534b839bd11366bfce8, type: 2}
   m_sharedMaterial: {fileID: 2119413175553802479, guid: 6d34d264dcbda534b839bd11366bfce8, type: 2}
@@ -28697,7 +28699,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Casi studio
+  m_text: 'Applicazioni
+
+    reali'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6d34d264dcbda534b839bd11366bfce8, type: 2}
   m_sharedMaterial: {fileID: 2119413175553802479, guid: 6d34d264dcbda534b839bd11366bfce8, type: 2}
@@ -31683,7 +31687,7 @@ GameObject:
   - component: {fileID: 1881466107}
   - component: {fileID: 1881466106}
   m_Layer: 0
-  m_Name: Casi studio
+  m_Name: Applicazioni reali
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -35678,6 +35682,7 @@ MonoBehaviour:
   mySpawner: {fileID: 1766750158}
   cameraManager: {fileID: 1616267367}
   raycastManager: {fileID: 1766750187}
+  controllerPointer: {fileID: 0}
   panelScanning: {fileID: 0}
   panelReadyToSpawn: {fileID: 0}
   panelObjectSpawned: {fileID: 0}
@@ -37244,7 +37249,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &1300908808843999262
 GameObject:
   m_ObjectHideFlags: 0
@@ -39202,7 +39207,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &2619910151633363589
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -41574,7 +41579,7 @@ GameObject:
   - component: {fileID: 3173365780395901523}
   - component: {fileID: 3515845863292407861}
   m_Layer: 0
-  m_Name: Casi studio
+  m_Name: Applicazioni reali
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -49317,7 +49322,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &8488783468187390423
 MonoBehaviour:
   m_ObjectHideFlags: 0

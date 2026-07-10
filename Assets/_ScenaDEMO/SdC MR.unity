@@ -6087,7 +6087,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -6659,7 +6659,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -6698,6 +6698,7 @@ MonoBehaviour:
   mySpawner: {fileID: 0}
   cameraManager: {fileID: 0}
   raycastManager: {fileID: 0}
+  controllerPointer: {fileID: 0}
   panelScanning: {fileID: 0}
   panelReadyToSpawn: {fileID: 0}
   panelObjectSpawned: {fileID: 0}
@@ -9347,7 +9348,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -9386,6 +9387,7 @@ MonoBehaviour:
   mySpawner: {fileID: 0}
   cameraManager: {fileID: 0}
   raycastManager: {fileID: 0}
+  controllerPointer: {fileID: 0}
   panelScanning: {fileID: 0}
   panelReadyToSpawn: {fileID: 0}
   panelObjectSpawned: {fileID: 0}
@@ -10809,6 +10811,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a2d7d89889b4d94fa1f8d6fe49788e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!4 &1387417044 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8387437365550436779, guid: 86a5bf68cb51f4e44bd3893bd22a2ba7, type: 3}
+  m_PrefabInstance: {fileID: 1766750150}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1431380454
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12584,7 +12591,7 @@ RectTransform:
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 750, y: 100}
-  m_Pivot: {x: 0, y: 0.5}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1635526895
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15319,6 +15326,7 @@ MonoBehaviour:
   mySpawner: {fileID: 1766750158}
   cameraManager: {fileID: 1616267367}
   raycastManager: {fileID: 1766750187}
+  controllerPointer: {fileID: 1387417044}
   panelScanning: {fileID: 692503996}
   panelReadyToSpawn: {fileID: 1194255366}
   panelObjectSpawned: {fileID: 579095016}
@@ -15561,6 +15569,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.21303052
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.97704554
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 155.4
+      objectReference: {fileID: 0}
     - target: {fileID: 2657247113933266007, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
       propertyPath: m_Name
       value: Env_trave
@@ -15575,7 +15599,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
       propertyPath: forceMagnitude
-      value: 8
+      value: 0.05
       objectReference: {fileID: 0}
     - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
       propertyPath: supportYOffset
@@ -15583,15 +15607,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
       propertyPath: shearDiagramScale
-      value: -0.01
+      value: -3.7
       objectReference: {fileID: 0}
     - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
       propertyPath: momentDiagramScale
-      value: -0.05
+      value: -14
+      objectReference: {fileID: 0}
+    - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
+      propertyPath: currentDiagramScale
+      value: -0.5
       objectReference: {fileID: 0}
     - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
       propertyPath: deflectionVisualScale
-      value: 500
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2966125952347699567, guid: 45c999e1b1319ae4f8a0f4b83aa5b4c8, type: 3}
       propertyPath: minDistanceBetweenObjects
